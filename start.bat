@@ -29,3 +29,10 @@ if not exist "%VENV_PYTHON%" (
 :: --- Launch C# app (it will spawn the Python ASR server via .venv automatically) ---
 cd /d "%~dp0src"
 dotnet run --project VoiceText.App
+if errorlevel 1 (
+    echo.
+    echo [ERROR] dotnet run failed ^(exit code %errorlevel%^).
+    echo        Check the output above for details.
+    pause
+    exit /b 1
+)
