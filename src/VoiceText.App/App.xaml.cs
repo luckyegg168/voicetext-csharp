@@ -22,6 +22,20 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        AppDomain.CurrentDomain.UnhandledException += (_, ex) =>
+        {
+            var msg = ex.ExceptionObject?.ToString() ?? "Unknown error";
+            System.IO.File.WriteAllText("voicetext_crash.log", msg);
+            MessageBox.Show(msg, "VoiceText Crash", MessageBoxButton.OK, MessageBoxImage.Error);
+        };
+        DispatcherUnhandledException += (_, ex) =>
+        {
+            var msg = ex.Exception?.ToString() ?? "Unknown error";
+            System.IO.File.WriteAllText("voicetext_crash.log", msg);
+            MessageBox.Show(msg, "VoiceText Crash", MessageBoxButton.OK, MessageBoxImage.Error);
+            ex.Handled = true;
+        };
+
         var settingsPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             "VoiceText", "settings.json");
