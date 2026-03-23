@@ -26,13 +26,20 @@ if not exist "%VENV_PYTHON%" (
     exit /b 1
 )
 
-:: --- Launch C# app (it will spawn the Python ASR server via .venv automatically) ---
+:: --- Build first to surface errors clearly ---
+echo [INFO] Building VoiceText.App...
 cd /d "%~dp0src"
-dotnet run --project VoiceText.App
+dotnet build VoiceText.App --no-restore -v minimal
 if errorlevel 1 (
     echo.
-    echo [ERROR] dotnet run failed ^(exit code %errorlevel%^).
-    echo        Check the output above for details.
+    echo [ERROR] Build failed. Check the output above.
     pause
     exit /b 1
 )
+
+:: --- Launch C# app (it will spawn the Python ASR server via .venv automatically) ---
+echo [INFO] Launching VoiceText.App...
+dotnet run --project VoiceText.App --no-build
+echo.
+echo [INFO] App exited with code %errorlevel%.
+pause
