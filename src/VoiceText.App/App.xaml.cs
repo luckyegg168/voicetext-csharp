@@ -65,7 +65,8 @@ public partial class App : Application
         // ASR
         services.AddHttpClient<IAsrService, QwenAsrHttpService>(c =>
             c.BaseAddress = new Uri($"http://{settings.AsrServerHost}:{settings.AsrServerPort}"));
-        var asrServerDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "asr_server"));
+        var asrServerDir = FindAncestorDirectory("asr_server", AppDomain.CurrentDomain.BaseDirectory)
+            ?? throw new DirectoryNotFoundException("Cannot locate asr_server directory.");
         var venvPython = Path.Combine(asrServerDir, ".venv", "Scripts", "python.exe");
         var pythonExe = File.Exists(venvPython) ? venvPython : "python";
         services.AddSingleton(_ => new AsrServerManager(pythonExe, asrServerDir, settings.AsrServerPort));
@@ -114,6 +115,18 @@ public partial class App : Application
                 vm.ToggleRecordingCommand.Execute(null);
             };
         };
+    }
+
+    private static string? FindAncestorDirectory(string targetName, string startDir)
+    {
+        var dir = new DirectoryInfo(startDir);
+        while (dir != null)
+        {
+            var candidate = Path.Combine(dir.FullName, targetName);
+            if (Directory.Exists(candidate)) return candidate;
+            dir = dir.Parent;
+        }
+        return null;
     }
 
     protected override void OnExit(ExitEventArgs e)
