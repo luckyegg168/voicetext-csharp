@@ -51,8 +51,10 @@ public partial class App : Application
         // ASR
         services.AddHttpClient<IAsrService, QwenAsrHttpService>(c =>
             c.BaseAddress = new Uri($"http://{settings.AsrServerHost}:{settings.AsrServerPort}"));
-        var asrServerDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "asr_server");
-        services.AddSingleton(_ => new AsrServerManager("python", asrServerDir, settings.AsrServerPort));
+        var asrServerDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "asr_server"));
+        var venvPython = Path.Combine(asrServerDir, ".venv", "Scripts", "python.exe");
+        var pythonExe = File.Exists(venvPython) ? venvPython : "python";
+        services.AddSingleton(_ => new AsrServerManager(pythonExe, asrServerDir, settings.AsrServerPort));
 
         // LLM
         services.AddHttpClient<OllamaService>(c => c.BaseAddress = new Uri(settings.OllamaBaseUrl));

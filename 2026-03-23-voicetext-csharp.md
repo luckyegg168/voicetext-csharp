@@ -2591,16 +2591,26 @@ git commit -m "feat: complete VoiceText v1.0 — ASR + polish + translation + Ap
 ### 先決條件
 
 ```bash
-# Python 環境
-python -m venv .venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r asr_server/requirements.txt
-
-# 下載 Silero VAD 模型
+# 1. 下載 Silero VAD 模型
 curl -L https://github.com/snakers4/silero-vad/raw/master/src/silero_vad/data/silero_vad.onnx \
      -o src/VoiceText.App/Assets/silero_vad.onnx
 
+# 2. Python 虛擬環境（專案隔離）
+cd asr_server
+python -m venv .venv
+.venv\Scripts\activate        # Windows
+pip install -r requirements.txt
+cd ..
+
+# 3. 啟動 C# 應用（自動 spawn Python ASR server via .venv）
+cd src && dotnet run --project VoiceText.App
+
+# --- 或直接使用 batch files ---
+install.bat   # 一鍵安裝（建立 .venv + 下載模型 + dotnet restore）
+start.bat     # 啟動應用
+
 # 下載 Qwen3-ASR 模型（首次啟動自動下載，或手動預下載）
-python -c "from qwen_asr import Qwen3ASRModel; Qwen3ASRModel.from_pretrained('Qwen/Qwen3-ASR-0.6B')"
+asr_server\.venv\Scripts\python -c "from qwen_asr import Qwen3ASRModel; Qwen3ASRModel.from_pretrained('Qwen/Qwen3-ASR-0.6B')"
 
 # Ollama（選擇性）
 ollama pull llama3.2

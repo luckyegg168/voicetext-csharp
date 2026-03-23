@@ -9,7 +9,7 @@ echo.
 echo This will remove:
 echo   - Build output (bin / obj folders)
 echo   - Downloaded model (silero_vad.onnx)
-echo   - Python virtual environment (if present)
+echo   - Python virtual environment (asr_server\.venv)
 echo.
 set /p "CONFIRM=Continue? (y/N): "
 if /i not "%CONFIRM%"=="y" (
@@ -40,21 +40,19 @@ if exist "%MODEL_FILE%" (
     echo [OK] silero_vad.onnx not found, skipping.
 )
 
-:: --- Remove Python venv if present ---
+:: --- Remove Python .venv ---
 echo.
-echo [3/3] Removing Python virtual environment (if any)...
-set "VENV_DIR=%~dp0asr_server\venv"
+echo [3/3] Removing Python virtual environment...
+set "VENV_DIR=%~dp0asr_server\.venv"
 if exist "%VENV_DIR%" (
     rd /s /q "%VENV_DIR%"
-    echo [OK] venv removed.
+    echo [OK] asr_server\.venv removed.
 ) else (
-    echo [OK] No venv found, skipping.
+    echo [OK] No .venv found, skipping.
 )
 
 echo.
 echo ================================================
 echo  Uninstall complete.
-echo  Python packages installed via pip are NOT
-echo  removed (use: pip uninstall -r asr_server\requirements.txt)
 echo ================================================
 pause

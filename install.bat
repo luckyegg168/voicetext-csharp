@@ -27,9 +27,9 @@ if exist "%MODEL_FILE%" (
     echo [OK] silero_vad.onnx downloaded.
 )
 
-:: --- 2. Python dependencies ---
+:: --- 2. Python .venv + dependencies ---
 echo.
-echo [2/3] Installing Python dependencies...
+echo [2/3] Setting up Python virtual environment...
 python --version >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] Python not found. Please install Python 3.10+ and add it to PATH.
@@ -37,8 +37,23 @@ if errorlevel 1 (
     exit /b 1
 )
 
-cd /d "%~dp0asr_server"
-pip install -r requirements.txt
+set "VENV_DIR=%~dp0asr_server\.venv"
+
+if not exist "%VENV_DIR%\Scripts\python.exe" (
+    echo       Creating .venv in asr_server\...
+    python -m venv "%VENV_DIR%"
+    if errorlevel 1 (
+        echo [ERROR] Failed to create virtual environment.
+        pause
+        exit /b 1
+    )
+    echo [OK] .venv created.
+) else (
+    echo [OK] .venv already exists, skipping creation.
+)
+
+echo       Installing Python dependencies into .venv...
+"%VENV_DIR%\Scripts\pip.exe" install -r "%~dp0asr_server\requirements.txt"
 if errorlevel 1 (
     echo [ERROR] pip install failed.
     pause

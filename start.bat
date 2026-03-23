@@ -17,14 +17,15 @@ if not exist "%MODEL_FILE%" (
     exit /b 1
 )
 
-:: --- Check Python ---
-python --version >nul 2>&1
-if errorlevel 1 (
-    echo [ERROR] Python not found. Please run install.bat first.
+:: --- Check .venv exists ---
+set "VENV_PYTHON=%~dp0asr_server\.venv\Scripts\python.exe"
+if not exist "%VENV_PYTHON%" (
+    echo [ERROR] Python virtual environment not found.
+    echo        Please run install.bat first.
     pause
     exit /b 1
 )
 
-:: --- Launch C# app (it will spawn the Python ASR server automatically) ---
+:: --- Launch C# app (it will spawn the Python ASR server via .venv automatically) ---
 cd /d "%~dp0src"
 dotnet run --project VoiceText.App
