@@ -1,0 +1,88 @@
+<!-- src/VoiceText.App/Styles/AppleControls.xaml -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Apple-style Button -->
+  <Style x:Key="AppleButton" TargetType="Button">
+    <Setter Property="Background" Value="{StaticResource SystemBlueBrush}"/>
+    <Setter Property="Foreground" Value="White"/>
+    <Setter Property="FontFamily" Value="{StaticResource AppleFont}"/>
+    <Setter Property="FontSize" Value="15"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="Padding" Value="16,8"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="Cursor" Value="Hand"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="Root" Background="{TemplateBinding Background}"
+                  CornerRadius="8" Padding="{TemplateBinding Padding}">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Root" Property="Opacity" Value="0.85"/>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="Root" Property="Opacity" Value="0.7"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter TargetName="Root" Property="Opacity" Value="0.4"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Apple-style TextBox -->
+  <Style x:Key="AppleTextBox" TargetType="TextBox">
+    <Setter Property="Background" Value="{StaticResource BackgroundSecondaryBrush}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource SeparatorBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Padding" Value="10,8"/>
+    <Setter Property="FontFamily" Value="{StaticResource AppleFont}"/>
+    <Setter Property="FontSize" Value="15"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="TextBox">
+          <Border Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  CornerRadius="8"
+                  Padding="{TemplateBinding Padding}">
+            <ScrollViewer x:Name="PART_ContentHost"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsFocused" Value="True">
+              <Setter Property="BorderBrush" Value="{StaticResource SystemBlueBrush}"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Apple-style Card -->
+  <Style x:Key="AppleCard" TargetType="Border">
+    <Setter Property="Background" Value="{StaticResource BackgroundSecondaryBrush}"/>
+    <Setter Property="CornerRadius" Value="12"/>
+    <Setter Property="Padding" Value="16"/>
+    <Setter Property="Effect">
+      <Setter.Value>
+        <DropShadowEffect BlurRadius="20" ShadowDepth="2" Direction="270"
+                          Color="#20000000" Opacity="0.15"/>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Apple-style ComboBox -->
+  <Style x:Key="AppleComboBox" TargetType="ComboBox">
+    <Setter Property="Background" Value="{StaticResource BackgroundSecondaryBrush}"/>
+    <Setter Property="BorderBrush" Value="{StaticResource SeparatorBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Padding" Value="10,6"/>
+    <Setter Property="FontFamily" Value="{StaticResource AppleFont}"/>
+    <Setter Property="FontSize" Value="15"/>
+  </Style>
+</ResourceDictionary>

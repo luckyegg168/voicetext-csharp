@@ -1,0 +1,38 @@
+<!-- src/VoiceText.App/Styles/AppleColors.xaml -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- System Colors (Light Mode) -->
+  <Color x:Key="SystemBlueColor">#FF007AFF</Color>
+  <Color x:Key="SystemGreenColor">#FF34C759</Color>
+  <Color x:Key="SystemRedColor">#FFFF3B30</Color>
+  <Color x:Key="SystemOrangeColor">#FFFF9500</Color>
+  <Color x:Key="SystemGrayColor">#FF8E8E93</Color>
+
+  <!-- Background -->
+  <Color x:Key="BackgroundPrimaryColor">#FFF2F2F7</Color>
+  <Color x:Key="BackgroundSecondaryColor">#FFFFFFFF</Color>
+  <Color x:Key="BackgroundTertiaryColor">#FFE5E5EA</Color>
+
+  <!-- Label Colors -->
+  <Color x:Key="LabelPrimaryColor">#FF000000</Color>
+  <Color x:Key="LabelSecondaryColor">#993C3C43</Color>
+  <Color x:Key="LabelTertiaryColor">#4C3C3C43</Color>
+
+  <!-- Separator -->
+  <Color x:Key="SeparatorColor">#3C3C3C4A</Color>
+
+  <!-- Brushes -->
+  <SolidColorBrush x:Key="SystemBlueBrush" Color="{StaticResource SystemBlueColor}"/>
+  <SolidColorBrush x:Key="SystemGreenBrush" Color="{StaticResource SystemGreenColor}"/>
+  <SolidColorBrush x:Key="SystemRedBrush" Color="{StaticResource SystemRedColor}"/>
+  <SolidColorBrush x:Key="SystemOrangeBrush" Color="{StaticResource SystemOrangeColor}"/>
+  <SolidColorBrush x:Key="SystemGrayBrush" Color="{StaticResource SystemGrayColor}"/>
+  <SolidColorBrush x:Key="BackgroundPrimaryBrush" Color="{StaticResource BackgroundPrimaryColor}"/>
+  <SolidColorBrush x:Key="BackgroundSecondaryBrush" Color="{StaticResource BackgroundSecondaryColor}"/>
+  <SolidColorBrush x:Key="BackgroundTertiaryBrush" Color="{StaticResource BackgroundTertiaryColor}"/>
+  <SolidColorBrush x:Key="LabelPrimaryBrush" Color="{StaticResource LabelPrimaryColor}"/>
+  <SolidColorBrush x:Key="LabelSecondaryBrush" Color="{StaticResource LabelSecondaryColor}"/>
+  <SolidColorBrush x:Key="LabelTertiaryBrush" Color="{StaticResource LabelTertiaryColor}"/>
+  <SolidColorBrush x:Key="SeparatorBrush" Color="{StaticResource SeparatorColor}"/>
+</ResourceDictionary>
