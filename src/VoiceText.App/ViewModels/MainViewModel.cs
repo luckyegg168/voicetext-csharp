@@ -39,7 +39,20 @@ public partial class MainViewModel : ObservableObject
         _translation = translation;
         _history = history;
         _vad.SpeechSegmentReady += OnSpeechSegmentReady;
-        _audio.ChunkAvailable += (_, chunk) => _vad.Feed(chunk);
+        _audio.ChunkAvailable += (_, chunk) =>
+        {
+            _vad.Feed(chunk);
+            // Update audio level (RMS) on UI thread
+            float sum = 0;
+            foreach (var s in chunk.Samples) sum += s * s;
+            var level = (float)Math.Sqrt(sum / chunk.Samples.Length);
+            System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                AudioLevel = level;
+                if (State == RecordingState.Recording)
+                    StatusMessage = $"錄音中... 音量:{level:P0}";
+            });
+        };
     }
 
     [RelayCommand]

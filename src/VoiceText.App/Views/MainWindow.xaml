@@ -29,7 +29,7 @@
       </Grid.RowDefinitions>
 
       <!-- Title bar (drag region) -->
-      <Grid Grid.Row="0" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+      <Grid Grid.Row="0" Background="Transparent" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
         <TextBlock Text="VoiceText" Style="{StaticResource Headline}"
                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
         <Button Content="⚙" HorizontalAlignment="Right" Margin="0,0,44,0"
@@ -77,7 +77,8 @@
             <CheckBox Content="自動潤稿" IsChecked="{Binding IsPolishEnabled}"
                       FontFamily="{StaticResource AppleFont}" FontSize="14" Margin="0,0,16,0"/>
             <TextBlock Text="語言:" VerticalAlignment="Center" FontFamily="{StaticResource AppleFont}" FontSize="14" Margin="0,0,6,0"/>
-            <ComboBox SelectedValue="{Binding SelectedLanguage}" Width="80" FontSize="13">
+            <ComboBox SelectedValue="{Binding SelectedLanguage}" SelectedValuePath="Content"
+                      Width="80" FontSize="13">
               <ComboBoxItem Content="auto"/>
               <ComboBoxItem Content="zh"/>
               <ComboBoxItem Content="en"/>

@@ -9,7 +9,7 @@ public class VadEngine : IDisposable
     private readonly InferenceSession _session;
     private float[] _h = new float[2 * 1 * 64];
     private float[] _c = new float[2 * 1 * 64];
-    private const float Threshold = 0.5f;
+    private const float Threshold = 0.35f;
 
     public VadEngine(string modelPath)
     {
