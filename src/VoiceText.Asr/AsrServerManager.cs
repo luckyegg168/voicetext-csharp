@@ -7,6 +7,8 @@ public class AsrServerManager : IDisposable
 {
     private Process? _process;
     private readonly string _pythonExe;
+    // workingDir is the PARENT of asr_server/ so that
+    // "python -m asr_server.main" resolves the package correctly.
     private readonly string _workingDir;
     private readonly int _port;
 
@@ -27,7 +29,7 @@ public class AsrServerManager : IDisposable
             {
                 FileName = _pythonExe,
                 Arguments = "-m asr_server.main",
-                WorkingDirectory = _workingDir,
+                WorkingDirectory = _workingDir,   // parent dir, NOT asr_server/ itself
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -36,6 +38,33 @@ public class AsrServerManager : IDisposable
         };
         _process.StartInfo.EnvironmentVariables["ASR_PORT"] = _port.ToString();
         _process.Start();
+    }
+
+    /// <summary>
+    /// Polls GET /health until the server responds 2xx or <paramref name="timeoutMs"/> elapses.
+    /// Returns true if the server became ready in time, false on timeout.
+    /// </summary>
+    public async Task<bool> WaitForReadyAsync(int timeoutMs = 30_000, CancellationToken ct = default)
+    {
+        using var http = new System.Net.Http.HttpClient
+        {
+            BaseAddress = new Uri($"http://127.0.0.1:{_port}"),
+            Timeout = TimeSpan.FromSeconds(2),
+        };
+
+        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        while (DateTime.UtcNow < deadline && !ct.IsCancellationRequested)
+        {
+            try
+            {
+                var resp = await http.GetAsync("/health", ct);
+                if (resp.IsSuccessStatusCode) return true;
+            }
+            catch { /* server not up yet */ }
+
+            await Task.Delay(500, ct);
+        }
+        return false;
     }
 
     public void Stop()

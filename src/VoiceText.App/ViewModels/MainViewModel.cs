@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using VoiceText.Asr;
 using VoiceText.Audio;
+using VoiceText.Config;
 using VoiceText.Llm;
 using VoiceText.Storage;
 
@@ -18,6 +19,10 @@ public partial class MainViewModel : ObservableObject
     private readonly PolishService _polish;
     private readonly TranslationService _translation;
     private readonly IHistoryRepository _history;
+    private readonly Func<AppSettings> _getSettings;
+
+    // Fix 5: explicit capturing flag so ToggleRecording is correct after auto-VAD fires
+    private bool _isCapturing;
 
     [ObservableProperty] private RecordingState _state = RecordingState.Idle;
     [ObservableProperty] private string _rawText = "";
@@ -28,9 +33,14 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _isTranslateEnabled = false;
     [ObservableProperty] private string _selectedLanguage = "auto";
 
+    // Fix 3: events wired up in App.xaml.cs to open the real windows
+    public event Action? OpenSettingsRequested;
+    public event Action? OpenHistoryRequested;
+
     public MainViewModel(IAudioCaptureService audio, VadPipeline vad,
                          IAsrService asr, PolishService polish,
-                         TranslationService translation, IHistoryRepository history)
+                         TranslationService translation, IHistoryRepository history,
+                         Func<AppSettings> getSettings)
     {
         _audio = audio;
         _vad = vad;
@@ -38,6 +48,7 @@ public partial class MainViewModel : ObservableObject
         _polish = polish;
         _translation = translation;
         _history = history;
+        _getSettings = getSettings;
         _vad.SpeechSegmentReady += OnSpeechSegmentReady;
         _audio.ChunkAvailable += (_, chunk) =>
         {
@@ -58,7 +69,9 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void ToggleRecording()
     {
-        if (State == RecordingState.Recording)
+        // Fix 5: use _isCapturing, not State, so auto-VAD finishing a segment
+        // doesn't confuse State into thinking we're still recording.
+        if (_isCapturing)
             StopRecording();
         else
             StartRecording();
@@ -66,15 +79,19 @@ public partial class MainViewModel : ObservableObject
 
     private void StartRecording()
     {
+        _isCapturing = true;
         State = RecordingState.Recording;
         StatusMessage = "錄音中...";
         RawText = "";
         PolishedText = "";
-        _audio.StartCapture();
+        // Fix 7: pass the saved microphone device id
+        var micId = _getSettings().MicrophoneDeviceId;
+        _audio.StartCapture(string.IsNullOrEmpty(micId) ? null : micId);
     }
 
     private void StopRecording()
     {
+        _isCapturing = false;
         _audio.StopCapture();
         var pending = _vad.FlushIfAny();
         if (pending != null)
@@ -110,6 +127,14 @@ public partial class MainViewModel : ObservableObject
 
             State = RecordingState.Done;
             StatusMessage = "完成";
+
+            // Fix 6: auto-copy to clipboard when setting is on
+            if (_getSettings().AutoCopyToClipboard)
+            {
+                var text = string.IsNullOrEmpty(PolishedText) ? RawText : PolishedText;
+                if (!string.IsNullOrEmpty(text))
+                    System.Windows.Clipboard.SetText(text);
+            }
         }
         catch (Exception ex)
         {
@@ -137,8 +162,8 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenSettings() { }   // Wired in App.xaml.cs
+    private void OpenSettings() => OpenSettingsRequested?.Invoke();
 
     [RelayCommand]
-    private void OpenHistory() { }    // Wired in App.xaml.cs
+    private void OpenHistory() => OpenHistoryRequested?.Invoke();
 }
