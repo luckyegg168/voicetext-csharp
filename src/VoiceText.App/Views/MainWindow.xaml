@@ -3,7 +3,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:converters="clr-namespace:VoiceText.App.Converters"
-        Title="VoiceText" Height="560" Width="440"
+        Title="VoiceText" Height="560" Width="440" xml:lang="zh-TW"
         Background="{StaticResource BackgroundPrimaryBrush}"
         WindowStyle="None" AllowsTransparency="True"
         ResizeMode="CanResize" Topmost="True">

@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using System.Globalization;
 using System.IO;
 using System.Windows;
+using System.Windows.Markup;
 using VoiceText.App.Helpers;
 using VoiceText.App.ViewModels;
 using VoiceText.App.Views;
@@ -21,6 +23,14 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // Set zh-TW culture globally
+        var culture = new CultureInfo("zh-TW");
+        CultureInfo.DefaultThreadCurrentCulture = culture;
+        CultureInfo.DefaultThreadCurrentUICulture = culture;
+        FrameworkElement.LanguageProperty.OverrideMetadata(
+            typeof(FrameworkElement),
+            new FrameworkPropertyMetadata(XmlLanguage.GetLanguage("zh-TW")));
 
         AppDomain.CurrentDomain.UnhandledException += (_, ex) =>
         {

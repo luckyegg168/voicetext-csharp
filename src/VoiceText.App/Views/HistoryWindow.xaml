@@ -2,7 +2,7 @@
 <Window x:Class="VoiceText.App.Views.HistoryWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="歷史記錄" Height="520" Width="600"
+        Title="歷史記錄" Height="520" Width="600" xml:lang="zh-TW"
         Background="{StaticResource BackgroundPrimaryBrush}"
         WindowStyle="None" AllowsTransparency="True"
         ResizeMode="CanResize">
@@ -47,7 +47,7 @@
           <DataTemplate>
             <Border Style="{StaticResource AppleCard}" Margin="0,4" Padding="12">
               <StackPanel>
-                <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}"
+                <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:yyyy年MM月dd日 HH:mm}'}"
                            Style="{StaticResource Caption}"/>
                 <TextBlock Text="{Binding RawText}" TextTrimming="CharacterEllipsis"
                            MaxHeight="40" FontFamily="{StaticResource AppleFont}" FontSize="14"

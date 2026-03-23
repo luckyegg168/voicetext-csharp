@@ -2,7 +2,7 @@
 <Window x:Class="VoiceText.App.Views.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="設定" Height="600" Width="480"
+        Title="設定" Height="600" Width="480" xml:lang="zh-TW"
         Background="{StaticResource BackgroundPrimaryBrush}"
         WindowStyle="None" AllowsTransparency="True"
         ResizeMode="NoResize">
