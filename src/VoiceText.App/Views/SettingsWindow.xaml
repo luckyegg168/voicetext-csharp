@@ -99,6 +99,8 @@
                 <TextBlock Text="靜默逾時 (ms)" VerticalAlignment="Center" FontFamily="{StaticResource AppleFont}"/>
                 <TextBox Grid.Column="1" Text="{Binding VadSilenceTimeoutMs}" Style="{StaticResource AppleTextBox}"/>
               </Grid>
+              <CheckBox Content="啟用語音活動偵測 (VAD)" IsChecked="{Binding VadEnabled}"
+                        FontFamily="{StaticResource AppleFont}" Margin="0,4"/>
             </StackPanel>
           </Border>
 
@@ -108,10 +110,15 @@
             <StackPanel>
               <CheckBox Content="自動複製到剪貼簿" IsChecked="{Binding AutoCopyToClipboard}"
                         FontFamily="{StaticResource AppleFont}" Margin="0,4"/>
+              <CheckBox Content="自動發送到焦點視窗（貼上）" IsChecked="{Binding AutoSendToWindow}"
+                        FontFamily="{StaticResource AppleFont}" Margin="0,4"/>
+              <CheckBox Content="按住熱鍵錄音，放開後自動發送（推播模式）" IsChecked="{Binding PushToTalkMode}"
+                        FontFamily="{StaticResource AppleFont}" Margin="0,4"/>
               <Grid Margin="0,4">
                 <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition/></Grid.ColumnDefinitions>
                 <TextBlock Text="全局熱鍵" VerticalAlignment="Center" FontFamily="{StaticResource AppleFont}"/>
-                <TextBox Grid.Column="1" Text="{Binding GlobalHotkey}" Style="{StaticResource AppleTextBox}"/>
+                <TextBox Grid.Column="1" Text="{Binding GlobalHotkey}" Style="{StaticResource AppleTextBox}"
+                         IsReadOnly="True" ToolTip="固定為 Ctrl+Alt+F8"/>
               </Grid>
             </StackPanel>
           </Border>

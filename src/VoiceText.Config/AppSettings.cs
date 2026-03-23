@@ -16,10 +16,13 @@ public record AppSettings
 
     public string MicrophoneDeviceId { get; init; } = "";
     public double VadSilenceTimeoutMs { get; init; } = 1500;
+    public bool VadEnabled { get; init; } = false;           // neural VAD (experimental)
     public bool AutoCopyToClipboard { get; init; } = true;
+    public bool AutoSendToWindow { get; init; } = false;     // paste result to focused window
+    public bool PushToTalkMode { get; init; } = false;       // hold hotkey = record, release = send
     public bool StartMinimized { get; init; } = false;
-    public string Theme { get; init; } = "System";          // System|Light|Dark
-    public string GlobalHotkey { get; init; } = "Alt+Shift+V";
+    public string Theme { get; init; } = "System";           // System|Light|Dark
+    public string GlobalHotkey { get; init; } = "Ctrl+Alt+F8";
 
     public static AppSettings Default => new();
 }

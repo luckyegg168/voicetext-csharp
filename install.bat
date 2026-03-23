@@ -77,6 +77,6 @@ echo.
 echo ================================================
 echo  Installation complete!
 echo  Run start.bat to launch VoiceText.
-echo  Hotkey: Alt+Shift+V to toggle recording.
+echo  Hotkey: Ctrl+Alt+F8 to toggle recording.
 echo ================================================
 pause

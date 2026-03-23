@@ -21,8 +21,9 @@ public partial class MainViewModel : ObservableObject
     private readonly IHistoryRepository _history;
     private readonly Func<AppSettings> _getSettings;
 
-    // Fix 5: explicit capturing flag so ToggleRecording is correct after auto-VAD fires
     private bool _isCapturing;
+    private readonly List<float> _rawBuffer = new();
+    private int _chunkCount;  // counts audio chunks received since last StartRecording
 
     [ObservableProperty] private RecordingState _state = RecordingState.Idle;
     [ObservableProperty] private string _rawText = "";
@@ -33,9 +34,10 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _isTranslateEnabled = false;
     [ObservableProperty] private string _selectedLanguage = "auto";
 
-    // Fix 3: events wired up in App.xaml.cs to open the real windows
     public event Action? OpenSettingsRequested;
     public event Action? OpenHistoryRequested;
+    /// <summary>Fired with the final text after transcription (for auto-send to window).</summary>
+    public event Action<string>? TranscriptionReady;
 
     public MainViewModel(IAudioCaptureService audio, VadPipeline vad,
                          IAsrService asr, PolishService polish,
@@ -52,7 +54,12 @@ public partial class MainViewModel : ObservableObject
         _vad.SpeechSegmentReady += OnSpeechSegmentReady;
         _audio.ChunkAvailable += (_, chunk) =>
         {
-            _vad.Feed(chunk);
+            _chunkCount++;
+            if (_getSettings().VadEnabled)
+                _vad.Feed(chunk);
+            else
+                lock (_rawBuffer) { _rawBuffer.AddRange(chunk.Samples); }
+
             // Update audio level (RMS) on UI thread
             float sum = 0;
             foreach (var s in chunk.Samples) sum += s * s;
@@ -69,35 +76,82 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void ToggleRecording()
     {
-        // Fix 5: use _isCapturing, not State, so auto-VAD finishing a segment
-        // doesn't confuse State into thinking we're still recording.
-        if (_isCapturing)
-            StopRecording();
-        else
-            StartRecording();
+        if (_isCapturing) StopRecording();
+        else StartRecording();
     }
+
+    /// <summary>Starts recording only when idle (used by push-to-talk hotkey down).</summary>
+    public void StartRecordingIfIdle()
+    {
+        if (!_isCapturing) StartRecording();
+    }
+
+    /// <summary>Stops recording and flushes (used by push-to-talk hotkey up).</summary>
+    public void StopAndFlush() => StopRecording();
 
     private void StartRecording()
     {
         _isCapturing = true;
+        _chunkCount = 0;
+        lock (_rawBuffer) { _rawBuffer.Clear(); }
         State = RecordingState.Recording;
         StatusMessage = "錄音中...";
         RawText = "";
         PolishedText = "";
-        // Fix 7: pass the saved microphone device id
-        var micId = _getSettings().MicrophoneDeviceId;
-        _audio.StartCapture(string.IsNullOrEmpty(micId) ? null : micId);
+        try
+        {
+            var micId = _getSettings().MicrophoneDeviceId;
+            _audio.StartCapture(string.IsNullOrEmpty(micId) ? null : micId);
+        }
+        catch (Exception ex)
+        {
+            _isCapturing = false;
+            State = RecordingState.Error;
+            StatusMessage = $"⚠ 麥克風錯誤: {ex.Message}";
+            return;
+        }
+        // Check after 3 s whether any audio arrived
+        _ = CheckAudioInputAsync();
+    }
+
+    private async Task CheckAudioInputAsync()
+    {
+        await Task.Delay(3000);
+        if (_isCapturing && _chunkCount == 0)
+        {
+            await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                StatusMessage = "⚠ 無音訊輸入，請檢查麥克風權限");
+        }
     }
 
     private void StopRecording()
     {
         _isCapturing = false;
         _audio.StopCapture();
-        var pending = _vad.FlushIfAny();
-        if (pending != null)
-            _ = ProcessSegmentAsync(pending);
+
+        if (!_getSettings().VadEnabled)
+        {
+            float[] segment;
+            lock (_rawBuffer) { segment = _rawBuffer.ToArray(); _rawBuffer.Clear(); }
+            if (segment.Length > 0)
+                _ = ProcessSegmentAsync(segment);
+            else
+            {
+                State = RecordingState.Idle;
+                StatusMessage = "準備就緒";
+            }
+        }
         else
-            State = RecordingState.Idle;
+        {
+            var pending = _vad.FlushIfAny();
+            if (pending != null)
+                _ = ProcessSegmentAsync(pending);
+            else
+            {
+                State = RecordingState.Idle;
+                StatusMessage = "準備就緒";
+            }
+        }
     }
 
     private async void OnSpeechSegmentReady(object? sender, float[] segment)
@@ -128,12 +182,12 @@ public partial class MainViewModel : ObservableObject
             State = RecordingState.Done;
             StatusMessage = "完成";
 
-            // Fix 6: auto-copy to clipboard when setting is on
-            if (_getSettings().AutoCopyToClipboard)
+            var finalText = string.IsNullOrEmpty(PolishedText) ? RawText : PolishedText;
+            if (!string.IsNullOrEmpty(finalText))
             {
-                var text = string.IsNullOrEmpty(PolishedText) ? RawText : PolishedText;
-                if (!string.IsNullOrEmpty(text))
-                    System.Windows.Clipboard.SetText(text);
+                if (_getSettings().AutoCopyToClipboard)
+                    System.Windows.Clipboard.SetText(finalText);
+                TranscriptionReady?.Invoke(finalText);
             }
         }
         catch (Exception ex)

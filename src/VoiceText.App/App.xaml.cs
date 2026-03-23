@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Markup;
 using WinForms = System.Windows.Forms;
@@ -17,10 +18,14 @@ namespace VoiceText.App;
 
 public partial class App : System.Windows.Application
 {
+    [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr hWnd);
+
     public static IServiceProvider Services { get; private set; } = null!;
 
     private GlobalHotkeyHelper? _hotkey;
     private IDisposable? _trayIcon;   // runtime type: WinForms.NotifyIcon
+    private IntPtr _lastForegroundHwnd;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -127,20 +132,63 @@ public partial class App : System.Windows.Application
 
         main.Show();
 
-        main.Loaded += (_, _) => OnMainLoaded(main, serverManager);
+        main.Loaded += (_, _) => OnMainLoaded(main, serverManager, settingsService);
     }
 
-    private void OnMainLoaded(MainWindow main, AsrServerManager serverManager)
+    private void OnMainLoaded(MainWindow main, AsrServerManager serverManager, SettingsService svc)
     {
-        // Global hotkey
-        _hotkey = new GlobalHotkeyHelper();
-        _hotkey.Register(main, HotkeyModifiers.Alt | HotkeyModifiers.Shift, 0x56 /* V */);
-        _hotkey.HotkeyPressed += (_, _) =>
+        // Global hotkey: Ctrl+Alt+F8 (low-level hook, no registration conflicts)
+        try
         {
-            main.Show();
-            main.Activate();
-            ((MainViewModel)main.DataContext).ToggleRecordingCommand.Execute(null);
-        };
+            _hotkey = new GlobalHotkeyHelper(vk: 0x77, needCtrl: true, needAlt: true, needShift: false);
+            var mainVm = (MainViewModel)main.DataContext;
+
+            _hotkey.HotkeyPressed += (_, _) =>
+            {
+                // Capture the window that was focused BEFORE we intervene
+                _lastForegroundHwnd = GetForegroundWindow();
+
+                var settings = svc.Load();
+                if (settings.PushToTalkMode)
+                {
+                    // Push-to-talk: start recording without stealing focus
+                    Dispatcher.InvokeAsync(() => mainVm.StartRecordingIfIdle());
+                }
+                else
+                {
+                    // Toggle mode: show window and toggle
+                    Dispatcher.InvokeAsync(() =>
+                    {
+                        main.Show();
+                        main.Activate();
+                        mainVm.ToggleRecordingCommand.Execute(null);
+                    });
+                }
+            };
+
+            _hotkey.HotkeyReleased += (_, _) =>
+            {
+                if (svc.Load().PushToTalkMode)
+                    Dispatcher.InvokeAsync(() => mainVm.StopAndFlush());
+            };
+
+            // Wire auto-send after transcription
+            mainVm.TranscriptionReady += text =>
+            {
+                if (!svc.Load().AutoSendToWindow) return;
+                var hwnd = _lastForegroundHwnd;
+                if (hwnd == IntPtr.Zero) return;
+                Dispatcher.InvokeAsync(() =>
+                {
+                    System.Windows.Clipboard.SetText(text);
+                    SetForegroundWindow(hwnd);
+                    // Small delay so the target window has time to become active
+                    _ = Task.Delay(150).ContinueWith(_ =>
+                        Dispatcher.InvokeAsync(() => WinForms.SendKeys.SendWait("^v")));
+                });
+            };
+        }
+        catch { /* continue without hotkey if hook fails */ }
 
         // System tray
         SetupTray(main);

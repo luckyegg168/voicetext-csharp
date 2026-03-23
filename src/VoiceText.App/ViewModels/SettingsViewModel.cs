@@ -21,8 +21,11 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string _polishPromptStyle = "natural";
     [ObservableProperty] private double _vadSilenceTimeoutMs = 1500;
     [ObservableProperty] private bool _autoCopyToClipboard = true;
-    [ObservableProperty] private string _globalHotkey = "Alt+Shift+V";
-    [ObservableProperty] private IReadOnlyList<(string Id, string Name)> _microphones = [];
+    [ObservableProperty] private bool _autoSendToWindow = false;
+    [ObservableProperty] private bool _pushToTalkMode = false;
+    [ObservableProperty] private string _globalHotkey = "Ctrl+Alt+F8";
+    [ObservableProperty] private bool _vadEnabled = true;
+    [ObservableProperty] private IReadOnlyList<MicrophoneDevice> _microphones = [];
     [ObservableProperty] private string _selectedMicrophoneId = "";
 
     public IReadOnlyList<string> LlmBackends { get; } = ["Ollama", "LlamaCpp"];
@@ -36,6 +39,9 @@ public partial class SettingsViewModel : ObservableObject
         _micEnum = micEnum;
         LoadFromSettings(settingsService.Load());
         Microphones = micEnum.GetDevices();
+        // Default to first device if none saved
+        if (string.IsNullOrEmpty(SelectedMicrophoneId) && Microphones.Count > 0)
+            SelectedMicrophoneId = Microphones[0].Id;
     }
 
     private void LoadFromSettings(AppSettings s)
@@ -49,7 +55,10 @@ public partial class SettingsViewModel : ObservableObject
         LlmModelName = s.LlmModelName;
         PolishPromptStyle = s.PolishPromptStyle;
         VadSilenceTimeoutMs = s.VadSilenceTimeoutMs;
+        VadEnabled = s.VadEnabled;
         AutoCopyToClipboard = s.AutoCopyToClipboard;
+        AutoSendToWindow = s.AutoSendToWindow;
+        PushToTalkMode = s.PushToTalkMode;
         GlobalHotkey = s.GlobalHotkey;
         SelectedMicrophoneId = s.MicrophoneDeviceId;
     }
@@ -68,7 +77,10 @@ public partial class SettingsViewModel : ObservableObject
             LlmModelName = LlmModelName,
             PolishPromptStyle = PolishPromptStyle,
             VadSilenceTimeoutMs = VadSilenceTimeoutMs,
+            VadEnabled = VadEnabled,
             AutoCopyToClipboard = AutoCopyToClipboard,
+            AutoSendToWindow = AutoSendToWindow,
+            PushToTalkMode = PushToTalkMode,
             GlobalHotkey = GlobalHotkey,
             MicrophoneDeviceId = SelectedMicrophoneId,
         };
