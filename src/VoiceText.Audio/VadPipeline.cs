@@ -5,10 +5,12 @@ public class VadPipeline : IDisposable
 {
     private readonly VadEngine _vad;
     private readonly List<float> _speechBuffer = new();
+    private readonly List<float> _pending = new();   // accumulates until we have 512 samples
     private readonly double _silenceTimeoutMs;
     private DateTime _lastSpeechTime = DateTime.MinValue;
     private bool _wasSpeech = false;
     private const int VadChunkSamples = 512; // 32ms at 16kHz
+    private int _lastSampleRate = 16000;
 
     public event EventHandler<float[]>? SpeechSegmentReady;
 
@@ -20,15 +22,15 @@ public class VadPipeline : IDisposable
 
     public void Feed(AudioChunk chunk)
     {
-        var samples = chunk.Samples;
-        int offset = 0;
+        _lastSampleRate = chunk.SampleRate;
+        _pending.AddRange(chunk.Samples);
 
-        while (offset + VadChunkSamples <= samples.Length)
+        while (_pending.Count >= VadChunkSamples)
         {
-            var window = samples[offset..(offset + VadChunkSamples)];
-            offset += VadChunkSamples;
+            var window = _pending.GetRange(0, VadChunkSamples).ToArray();
+            _pending.RemoveRange(0, VadChunkSamples);
 
-            bool isSpeech = _vad.IsSpeech(window, chunk.SampleRate);
+            bool isSpeech = _vad.IsSpeech(window, _lastSampleRate);
 
             if (isSpeech)
             {
@@ -45,6 +47,7 @@ public class VadPipeline : IDisposable
                     _speechBuffer.Clear();
                     _vad.Reset();
                     _wasSpeech = false;
+                    _pending.Clear();
                     SpeechSegmentReady?.Invoke(this, segment);
                 }
             }
