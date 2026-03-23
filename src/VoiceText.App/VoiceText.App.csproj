@@ -16,6 +16,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Assets\silero_vad.onnx" Condition="Exists('Assets\silero_vad.onnx')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\VoiceText.Audio\VoiceText.Audio.csproj" />
     <ProjectReference Include="..\VoiceText.Asr\VoiceText.Asr.csproj" />
     <ProjectReference Include="..\VoiceText.Llm\VoiceText.Llm.csproj" />
