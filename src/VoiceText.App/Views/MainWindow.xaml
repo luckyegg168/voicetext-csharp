@@ -71,6 +71,17 @@
           <!-- Status -->
           <TextBlock Text="{Binding StatusMessage}" Style="{StaticResource Caption}"
                      HorizontalAlignment="Center" Margin="0,0,0,12"/>
+          <TextBlock Text="{Binding VadDiagnostics}" Style="{StaticResource Caption}"
+                     TextWrapping="Wrap" HorizontalAlignment="Center" Margin="12,0,12,12"/>
+          <Border Style="{StaticResource AppleCard}" Margin="0,0,0,8">
+            <StackPanel>
+              <TextBlock Text="流程除錯" Style="{StaticResource Caption}" Margin="0,0,0,6"/>
+              <TextBlock Text="{Binding LastVadFilteredLength}" Style="{StaticResource Caption}" TextWrapping="Wrap" Margin="0,0,0,4"/>
+              <TextBlock Text="{Binding LastAsrRawText}" Style="{StaticResource Caption}" TextWrapping="Wrap" Margin="0,0,0,4"/>
+              <TextBlock Text="{Binding LastPolishResult}" Style="{StaticResource Caption}" TextWrapping="Wrap" Margin="0,0,0,4"/>
+              <TextBlock Text="{Binding LastSentText}" Style="{StaticResource Caption}" TextWrapping="Wrap"/>
+            </StackPanel>
+          </Border>
 
           <!-- Polish toggle row -->
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,12">

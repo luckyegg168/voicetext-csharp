@@ -99,6 +99,21 @@
                 <TextBlock Text="靜默逾時 (ms)" VerticalAlignment="Center" FontFamily="{StaticResource AppleFont}"/>
                 <TextBox Grid.Column="1" Text="{Binding VadSilenceTimeoutMs}" Style="{StaticResource AppleTextBox}"/>
               </Grid>
+              <Grid Margin="0,4">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                <TextBlock Text="最短語音 (ms)" VerticalAlignment="Center" FontFamily="{StaticResource AppleFont}"/>
+                <TextBox Grid.Column="1" Text="{Binding VadMinSpeechMs}" Style="{StaticResource AppleTextBox}"/>
+              </Grid>
+              <Grid Margin="0,4">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                <TextBlock Text="最小音量 (%)" VerticalAlignment="Center" FontFamily="{StaticResource AppleFont}"/>
+                <TextBox Grid.Column="1" Text="{Binding VadMinVolumePercent}" Style="{StaticResource AppleTextBox}"/>
+              </Grid>
+              <Grid Margin="0,4">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                <TextBlock Text="VAD 門檻 (0-1)" VerticalAlignment="Center" FontFamily="{StaticResource AppleFont}"/>
+                <TextBox Grid.Column="1" Text="{Binding VadSpeechThreshold}" Style="{StaticResource AppleTextBox}"/>
+              </Grid>
               <CheckBox Content="啟用語音活動偵測 (VAD)" IsChecked="{Binding VadEnabled}"
                         FontFamily="{StaticResource AppleFont}" Margin="0,4"/>
             </StackPanel>

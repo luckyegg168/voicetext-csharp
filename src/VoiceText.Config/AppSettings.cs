@@ -15,7 +15,10 @@ public record AppSettings
     public string PolishPromptStyle { get; init; } = "natural";  // natural|formal|technical|meeting
 
     public string MicrophoneDeviceId { get; init; } = "";
-    public double VadSilenceTimeoutMs { get; init; } = 1500;
+    public double VadSilenceTimeoutMs { get; init; } = 300;
+    public double VadMinSpeechMs { get; init; } = 30;
+    public double VadMinVolumePercent { get; init; } = 0.2;
+    public double VadSpeechThreshold { get; init; } = 0.35;
     public bool VadEnabled { get; init; } = false;           // neural VAD (experimental)
     public bool AutoCopyToClipboard { get; init; } = true;
     public bool AutoSendToWindow { get; init; } = false;     // paste result to focused window

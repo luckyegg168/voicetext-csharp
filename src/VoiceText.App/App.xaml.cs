@@ -18,15 +18,14 @@ namespace VoiceText.App;
 
 public partial class App : System.Windows.Application
 {
+    private const string FixedGlobalHotkey = "Ctrl+Alt+F8";
     [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
-    [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr hWnd);
 
     public static IServiceProvider Services { get; private set; } = null!;
 
     private GlobalHotkeyHelper? _hotkey;
     private IDisposable? _trayIcon;   // runtime type: WinForms.NotifyIcon
     private IntPtr _lastForegroundHwnd;
-
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -130,17 +129,16 @@ public partial class App : System.Windows.Application
             };
         }
 
-        main.Show();
-
         main.Loaded += (_, _) => OnMainLoaded(main, serverManager, settingsService);
+        main.Show();
     }
 
     private void OnMainLoaded(MainWindow main, AsrServerManager serverManager, SettingsService svc)
     {
-        // Global hotkey: Ctrl+Alt+F8 (low-level hook, no registration conflicts)
+        // Register the fixed global hotkey.
         try
         {
-            _hotkey = new GlobalHotkeyHelper(vk: 0x77, needCtrl: true, needAlt: true, needShift: false);
+            _hotkey = new GlobalHotkeyHelper(FixedGlobalHotkey);
             var mainVm = (MainViewModel)main.DataContext;
 
             _hotkey.HotkeyPressed += (_, _) =>
@@ -156,11 +154,12 @@ public partial class App : System.Windows.Application
                 }
                 else
                 {
-                    // Toggle mode: show window and toggle
+                    // Toggle mode: do NOT call main.Activate() — that would overwrite
+                    // _lastForegroundHwnd with VoiceText and break AutoSendToWindow.
                     Dispatcher.InvokeAsync(() =>
                     {
                         main.Show();
-                        main.Activate();
+                        // main.Activate() intentionally omitted to preserve target focus
                         mainVm.ToggleRecordingCommand.Execute(null);
                     });
                 }
@@ -178,17 +177,12 @@ public partial class App : System.Windows.Application
                 if (!svc.Load().AutoSendToWindow) return;
                 var hwnd = _lastForegroundHwnd;
                 if (hwnd == IntPtr.Zero) return;
-                Dispatcher.InvokeAsync(() =>
-                {
-                    System.Windows.Clipboard.SetText(text);
-                    SetForegroundWindow(hwnd);
-                    // Small delay so the target window has time to become active
-                    _ = Task.Delay(150).ContinueWith(_ =>
-                        Dispatcher.InvokeAsync(() => WinForms.SendKeys.SendWait("^v")));
-                });
+                Dispatcher.InvokeAsync(async () => await FocusedWindowTextSender.SendAsync(hwnd, text));
             };
         }
-        catch { /* continue without hotkey if hook fails */ }
+        catch
+        {
+        }
 
         // System tray
         SetupTray(main);

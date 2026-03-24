@@ -4,15 +4,34 @@ namespace VoiceText.Audio;
 public class VadPipeline : IDisposable
 {
     private readonly VadEngine _vad;
-    private readonly List<float> _speechBuffer = new();
-    private readonly List<float> _pending = new();   // accumulates until we have 512 samples
-    private readonly double _silenceTimeoutMs;
-    private DateTime _lastSpeechTime = DateTime.MinValue;
-    private bool _wasSpeech = false;
+    private double _silenceTimeoutMs;
+    private double _minVolumePercent;
     private const int VadChunkSamples = 512; // 32ms at 16kHz
-    private int _lastSampleRate = 16000;
+    private const int SampleRate = 16000;
+    private const int SpeechPadMs = 300;
+    private double _minSpeechDurationMs = 250;
 
-    public event EventHandler<float[]>? SpeechSegmentReady;
+    public bool IsAvailable => _vad.IsAvailable;
+    public float EngineThreshold
+    {
+        get => _vad.Threshold;
+        set => _vad.Threshold = value;
+    }
+    public double MinSpeechDurationMs
+    {
+        get => _minSpeechDurationMs;
+        set => _minSpeechDurationMs = Math.Max(20, value);
+    }
+    public double SilenceTimeoutMs
+    {
+        get => _silenceTimeoutMs;
+        set => _silenceTimeoutMs = value;
+    }
+    public double MinVolumePercent
+    {
+        get => _minVolumePercent;
+        set => _minVolumePercent = Math.Max(0, value);
+    }
 
     public VadPipeline(VadEngine vad, double silenceTimeoutMs = 1500)
     {
@@ -20,49 +39,113 @@ public class VadPipeline : IDisposable
         _silenceTimeoutMs = silenceTimeoutMs;
     }
 
-    public void Feed(AudioChunk chunk)
+    public VadAnalysisResult ExtractSpeech(float[] samples)
     {
-        _lastSampleRate = chunk.SampleRate;
-        _pending.AddRange(chunk.Samples);
+        if (!_vad.IsAvailable || samples.Length == 0)
+            return new VadAnalysisResult(
+                samples.Length == 0 ? null : samples,
+                0,
+                0,
+                0,
+                0);
 
-        while (_pending.Count >= VadChunkSamples)
+        _vad.Reset();
+
+        var minSpeechSamples = MsToSamples(_minSpeechDurationMs);
+        var minSilenceSamples = MsToSamples(_silenceTimeoutMs);
+        var speechPadSamples = MsToSamples(SpeechPadMs);
+
+        var segments = new List<(int Start, int End)>();
+        bool triggered = false;
+        int speechStart = 0;
+        int silenceSamples = 0;
+        int index = 0;
+        double maxVolumePercent = 0;
+        float maxSpeechProbability = 0;
+        int speechWindowCount = 0;
+        int windowCount = 0;
+
+        while (index + VadChunkSamples <= samples.Length)
         {
-            var window = _pending.GetRange(0, VadChunkSamples).ToArray();
-            _pending.RemoveRange(0, VadChunkSamples);
+            var window = new float[VadChunkSamples];
+            Array.Copy(samples, index, window, 0, VadChunkSamples);
 
-            bool isSpeech = _vad.IsSpeech(window, _lastSampleRate);
+            var volumePercent = CalculateRms(window) * 100.0;
+            maxVolumePercent = Math.Max(maxVolumePercent, volumePercent);
+            var speechProbability = _vad.GetSpeechProbability(window, SampleRate);
+            maxSpeechProbability = Math.Max(maxSpeechProbability, speechProbability);
+            bool isSpeech = volumePercent >= _minVolumePercent && speechProbability >= _vad.Threshold;
+            windowCount++;
 
             if (isSpeech)
             {
-                _speechBuffer.AddRange(window);
-                _lastSpeechTime = DateTime.UtcNow;
-                _wasSpeech = true;
-            }
-            else if (_wasSpeech)
-            {
-                double silenceMs = (DateTime.UtcNow - _lastSpeechTime).TotalMilliseconds;
-                if (silenceMs >= _silenceTimeoutMs)
+                speechWindowCount++;
+                silenceSamples = 0;
+                if (!triggered)
                 {
-                    var segment = _speechBuffer.ToArray();
-                    _speechBuffer.Clear();
-                    _vad.Reset();
-                    _wasSpeech = false;
-                    _pending.Clear();
-                    SpeechSegmentReady?.Invoke(this, segment);
+                    triggered = true;
+                    speechStart = Math.Max(0, index - speechPadSamples);
                 }
             }
+            else if (triggered)
+            {
+                silenceSamples += VadChunkSamples;
+                if (silenceSamples >= minSilenceSamples)
+                {
+                    var speechEnd = Math.Min(samples.Length, index - silenceSamples + VadChunkSamples + speechPadSamples);
+                    if (speechEnd - speechStart >= minSpeechSamples)
+                        segments.Add((speechStart, speechEnd));
+                    triggered = false;
+                    silenceSamples = 0;
+                }
+            }
+
+            index += VadChunkSamples;
         }
+
+        if (triggered)
+        {
+            var speechEnd = samples.Length;
+            if (speechEnd - speechStart >= minSpeechSamples)
+                segments.Add((speechStart, speechEnd));
+        }
+
+        if (segments.Count == 0)
+            return new VadAnalysisResult(null, maxVolumePercent, maxSpeechProbability, speechWindowCount, windowCount);
+
+        var merged = new List<float>();
+        foreach (var (start, end) in segments)
+        {
+            for (int i = start; i < end && i < samples.Length; i++)
+                merged.Add(samples[i]);
+        }
+
+        var filtered = merged.Count == 0 ? null : merged.ToArray();
+        return new VadAnalysisResult(
+            filtered,
+            maxVolumePercent,
+            maxSpeechProbability,
+            speechWindowCount,
+            windowCount);
     }
 
-    public float[]? FlushIfAny()
+    /// <summary>Resets all internal VAD state for a fresh recording session.</summary>
+    public void ResetState()
     {
-        if (_speechBuffer.Count == 0) return null;
-        var segment = _speechBuffer.ToArray();
-        _speechBuffer.Clear();
         _vad.Reset();
-        _wasSpeech = false;
-        return segment;
     }
 
     public void Dispose() => _vad.Dispose();
+
+    private static int MsToSamples(double milliseconds) =>
+        Math.Max(VadChunkSamples, (int)(SampleRate * (milliseconds / 1000.0)));
+
+    private static double CalculateRms(float[] samples)
+    {
+        if (samples.Length == 0) return 0;
+        double sum = 0;
+        foreach (var sample in samples)
+            sum += sample * sample;
+        return Math.Sqrt(sum / samples.Length);
+    }
 }

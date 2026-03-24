@@ -7,6 +7,7 @@ namespace VoiceText.App.ViewModels;
 
 public partial class SettingsViewModel : ObservableObject
 {
+    private const string FixedGlobalHotkey = "Ctrl+Alt+F8";
     private readonly SettingsService _settingsService;
     private readonly ApiKeyStore _keyStore;
     private readonly MicrophoneEnumerator _micEnum;
@@ -19,7 +20,10 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private string _llamaCppBaseUrl = "http://localhost:8080";
     [ObservableProperty] private string _llmModelName = "llama3.2";
     [ObservableProperty] private string _polishPromptStyle = "natural";
-    [ObservableProperty] private double _vadSilenceTimeoutMs = 1500;
+    [ObservableProperty] private double _vadSilenceTimeoutMs = 300;
+    [ObservableProperty] private double _vadMinSpeechMs = 30;
+    [ObservableProperty] private double _vadMinVolumePercent = 0.2;
+    [ObservableProperty] private double _vadSpeechThreshold = 0.35;
     [ObservableProperty] private bool _autoCopyToClipboard = true;
     [ObservableProperty] private bool _autoSendToWindow = false;
     [ObservableProperty] private bool _pushToTalkMode = false;
@@ -55,11 +59,14 @@ public partial class SettingsViewModel : ObservableObject
         LlmModelName = s.LlmModelName;
         PolishPromptStyle = s.PolishPromptStyle;
         VadSilenceTimeoutMs = s.VadSilenceTimeoutMs;
+        VadMinSpeechMs = s.VadMinSpeechMs;
+        VadMinVolumePercent = s.VadMinVolumePercent;
+        VadSpeechThreshold = s.VadSpeechThreshold;
         VadEnabled = s.VadEnabled;
         AutoCopyToClipboard = s.AutoCopyToClipboard;
         AutoSendToWindow = s.AutoSendToWindow;
         PushToTalkMode = s.PushToTalkMode;
-        GlobalHotkey = s.GlobalHotkey;
+        GlobalHotkey = FixedGlobalHotkey;
         SelectedMicrophoneId = s.MicrophoneDeviceId;
     }
 
@@ -77,11 +84,14 @@ public partial class SettingsViewModel : ObservableObject
             LlmModelName = LlmModelName,
             PolishPromptStyle = PolishPromptStyle,
             VadSilenceTimeoutMs = VadSilenceTimeoutMs,
+            VadMinSpeechMs = VadMinSpeechMs,
+            VadMinVolumePercent = VadMinVolumePercent,
+            VadSpeechThreshold = VadSpeechThreshold,
             VadEnabled = VadEnabled,
             AutoCopyToClipboard = AutoCopyToClipboard,
             AutoSendToWindow = AutoSendToWindow,
             PushToTalkMode = PushToTalkMode,
-            GlobalHotkey = GlobalHotkey,
+            GlobalHotkey = FixedGlobalHotkey,
             MicrophoneDeviceId = SelectedMicrophoneId,
         };
         _settingsService.Save(settings);

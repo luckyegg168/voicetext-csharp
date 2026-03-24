@@ -17,7 +17,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Assets\silero_vad.onnx" Condition="Exists('Assets\silero_vad.onnx')">
+    <!-- Copy entire Assets folder to output (silero_vad.onnx, icons, etc.) -->
+    <None Update="Assets\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
