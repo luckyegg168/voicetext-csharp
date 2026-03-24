@@ -11,6 +11,8 @@ namespace VoiceText.App.ViewModels;
 
 public enum RecordingState { Idle, Recording, Transcribing, Polishing, Done, Error }
 
+public record TranslateLanguageOption(string Code, string Display);
+
 public partial class MainViewModel : ObservableObject
 {
     private const int SampleRate16k = 16_000;
@@ -22,6 +24,7 @@ public partial class MainViewModel : ObservableObject
     private readonly TranslationService _translation;
     private readonly IHistoryRepository _history;
     private readonly Func<AppSettings> _getSettings;
+    private readonly SettingsService _settingsService;
 
     private bool _isCapturing;
     private readonly List<float> _rawBuffer = new();
@@ -42,6 +45,31 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _isTranslateEnabled = false;
     [ObservableProperty] private string _selectedLanguage = "auto";
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PolishCardLabel))]
+    private string _polishOutputLanguage = "none";
+
+    public string PolishCardLabel => PolishOutputLanguage == "none" ? "潤稿結果" : "潤稿／翻譯結果";
+
+    public IReadOnlyList<TranslateLanguageOption> TranslateLanguages { get; } =
+    [
+        new("none",  "不翻譯"),
+        new("zh-TW", "繁體中文"),
+        new("zh-CN", "简体中文"),
+        new("en",    "English"),
+        new("ja",    "日本語"),
+        new("ko",    "한국어"),
+        new("fr",    "Français"),
+        new("es",    "Español"),
+        new("de",    "Deutsch"),
+        new("pt",    "Português"),
+        new("ru",    "Русский"),
+        new("vi",    "Tiếng Việt"),
+        new("th",    "ภาษาไทย"),
+        new("ar",    "العربية"),
+        new("id",    "Bahasa Indonesia"),
+    ];
+
     public event Action? OpenSettingsRequested;
     public event Action? OpenHistoryRequested;
     /// <summary>Fired with the final text after transcription (for auto-send to window).</summary>
@@ -50,7 +78,7 @@ public partial class MainViewModel : ObservableObject
     public MainViewModel(IAudioCaptureService audio, VadPipeline vad,
                          IAsrService asr, PolishService polish,
                          TranslationService translation, IHistoryRepository history,
-                         Func<AppSettings> getSettings)
+                         Func<AppSettings> getSettings, SettingsService settingsService)
     {
         _audio = audio;
         _vad = vad;
@@ -59,6 +87,8 @@ public partial class MainViewModel : ObservableObject
         _translation = translation;
         _history = history;
         _getSettings = getSettings;
+        _settingsService = settingsService;
+        _polishOutputLanguage = settingsService.Load().PolishOutputLanguage;
         _audio.ChunkAvailable += (_, chunk) =>
         {
             _chunkCount++;
@@ -78,9 +108,14 @@ public partial class MainViewModel : ObservableObject
         };
     }
 
-    [RelayCommand]
-    private void ToggleRecording()
+    partial void OnPolishOutputLanguageChanged(string value)
     {
+        var current = _settingsService.Load();
+        _settingsService.Save(current with { PolishOutputLanguage = value });
+    }
+
+    [RelayCommand]
+    private void ToggleRecording(){
         if (_isCapturing) StopRecording();
         else StartRecording();
     }
@@ -218,6 +253,13 @@ public partial class MainViewModel : ObservableObject
                     StatusMessage = "潤稿中...";
                     PolishedText = await _polish.PolishAsync(result.Text);
                     LastPolishResult = $"潤稿結果: {PolishedText}";
+
+                    if (PolishOutputLanguage != "none" && !string.IsNullOrEmpty(PolishedText))
+                    {
+                        StatusMessage = "翻譯中...";
+                        PolishedText = await _translation.TranslateAsync(PolishedText, PolishOutputLanguage);
+                        LastPolishResult = $"翻譯結果: {PolishedText}";
+                    }
                 }
                 catch
                 {
@@ -258,8 +300,9 @@ public partial class MainViewModel : ObservableObject
     {
         var source = string.IsNullOrEmpty(PolishedText) ? RawText : PolishedText;
         if (string.IsNullOrEmpty(source)) return;
+        var lang = PolishOutputLanguage == "none" ? "en" : PolishOutputLanguage;
         StatusMessage = "翻譯中...";
-        PolishedText = await _translation.TranslateToEnglishAsync(source);
+        PolishedText = await _translation.TranslateAsync(source, lang);
         StatusMessage = "翻譯完成";
     }
 

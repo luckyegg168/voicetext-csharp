@@ -60,6 +60,7 @@ public partial class App : System.Windows.Application
 
         var settingsService = new SettingsService(settingsPath);
         var settings = settingsService.Load();
+        var ollamaBaseUrl = NormalizeOllamaBaseUrl(settings.OllamaBaseUrl);
 
         var services = new ServiceCollection();
 
@@ -87,7 +88,8 @@ public partial class App : System.Windows.Application
         var pythonExe = File.Exists(venvPython) ? venvPython : "python";
         services.AddSingleton(_ => new AsrServerManager(pythonExe, asrWorkingDir, settings.AsrServerPort));
 
-        services.AddHttpClient<OllamaService>(c => c.BaseAddress = new Uri(settings.OllamaBaseUrl));
+        services.AddHttpClient<OllamaService>(c => c.BaseAddress = new Uri(ollamaBaseUrl));
+        services.AddHttpClient<OllamaModelCatalog>(c => c.BaseAddress = new Uri(ollamaBaseUrl));
         services.AddHttpClient<LlamaCppService>(c => c.BaseAddress = new Uri(settings.LlamaCppBaseUrl));
         services.AddSingleton<ILlmService>(sp => new LlmRouter(
             () => settingsService.Load(),
@@ -228,6 +230,31 @@ public partial class App : System.Windows.Application
             dir = dir.Parent;
         }
         return null;
+    }
+
+    private static string NormalizeOllamaBaseUrl(string? value)
+    {
+        var raw = string.IsNullOrWhiteSpace(value) ? "http://localhost:11434/api" : value.Trim();
+        if (!raw.EndsWith("/", StringComparison.Ordinal))
+            raw += "/";
+
+        if (Uri.TryCreate(raw, UriKind.Absolute, out var uri))
+        {
+            var path = uri.AbsolutePath.TrimEnd('/');
+            if (!path.EndsWith("/api", StringComparison.OrdinalIgnoreCase) &&
+                !path.Equals("api", StringComparison.OrdinalIgnoreCase))
+            {
+                var builder = new UriBuilder(uri)
+                {
+                    Path = $"{path}/api/".Replace("//", "/")
+                };
+                return builder.Uri.ToString();
+            }
+
+            return uri.ToString();
+        }
+
+        return "http://localhost:11434/api/";
     }
 
     protected override void OnExit(ExitEventArgs e)

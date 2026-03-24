@@ -9,10 +9,11 @@ public record AppSettings
     public string AsrLanguage { get; init; } = "auto";
 
     public string LlmBackend { get; init; } = "Ollama";     // "Ollama" | "LlamaCpp"
-    public string OllamaBaseUrl { get; init; } = "http://localhost:11434";
+    public string OllamaBaseUrl { get; init; } = "http://localhost:11434/api";
     public string LlamaCppBaseUrl { get; init; } = "http://localhost:8080";
-    public string LlmModelName { get; init; } = "llama3.2";
+    public string LlmModelName { get; init; } = "gemma:2b";
     public string PolishPromptStyle { get; init; } = "natural";  // natural|formal|technical|meeting
+    public string PolishOutputLanguage { get; init; } = "none";  // none|zh-TW|zh-CN|en|ja|ko|fr|es|de|pt|ru|vi|th|ar|id
 
     public string MicrophoneDeviceId { get; init; } = "";
     public double VadSilenceTimeoutMs { get; init; } = 300;

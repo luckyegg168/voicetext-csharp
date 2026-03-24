@@ -21,9 +21,10 @@ public class OllamaService : ILlmService
                 new { role = "system", content = systemPrompt },
                 new { role = "user", content = userPrompt },
             },
+            think = false,
             stream = false,
         };
-        var resp = await _http.PostAsJsonAsync("/api/chat", payload, ct);
+        var resp = await _http.PostAsJsonAsync("chat", payload, ct);
         resp.EnsureSuccessStatusCode();
         var doc = await JsonDocument.ParseAsync(await resp.Content.ReadAsStreamAsync(ct), cancellationToken: ct);
         return doc.RootElement.GetProperty("message").GetProperty("content").GetString()!;
@@ -40,9 +41,10 @@ public class OllamaService : ILlmService
                 new { role = "system", content = systemPrompt },
                 new { role = "user", content = userPrompt },
             },
+            think = false,
             stream = true,
         };
-        var resp = await _http.PostAsJsonAsync("/api/chat", payload, ct);
+        var resp = await _http.PostAsJsonAsync("chat", payload, ct);
         resp.EnsureSuccessStatusCode();
         using var stream = await resp.Content.ReadAsStreamAsync(ct);
         using var reader = new System.IO.StreamReader(stream);
@@ -58,7 +60,7 @@ public class OllamaService : ILlmService
 
     public async Task<bool> IsHealthyAsync(CancellationToken ct = default)
     {
-        try { return (await _http.GetAsync("/api/tags", ct)).IsSuccessStatusCode; }
+        try { return (await _http.GetAsync("tags", ct)).IsSuccessStatusCode; }
         catch { return false; }
     }
 }

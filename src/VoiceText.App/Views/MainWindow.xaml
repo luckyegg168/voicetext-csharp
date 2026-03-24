@@ -89,13 +89,21 @@
                       FontFamily="{StaticResource AppleFont}" FontSize="14" Margin="0,0,16,0"/>
             <TextBlock Text="語言:" VerticalAlignment="Center" FontFamily="{StaticResource AppleFont}" FontSize="14" Margin="0,0,6,0"/>
             <ComboBox SelectedValue="{Binding SelectedLanguage}" SelectedValuePath="Content"
-                      Width="80" FontSize="13">
+                      Width="80" FontSize="13" Margin="0,0,12,0">
               <ComboBoxItem Content="auto"/>
               <ComboBoxItem Content="zh"/>
               <ComboBoxItem Content="en"/>
               <ComboBoxItem Content="ja"/>
               <ComboBoxItem Content="ko"/>
             </ComboBox>
+            <TextBlock Text="→" VerticalAlignment="Center" FontFamily="{StaticResource AppleFont}" FontSize="14" Margin="0,0,6,0"
+                       Visibility="{Binding IsPolishEnabled, Converter={StaticResource BoolToVis}}"/>
+            <ComboBox ItemsSource="{Binding TranslateLanguages}"
+                      SelectedValue="{Binding PolishOutputLanguage}"
+                      SelectedValuePath="Code"
+                      DisplayMemberPath="Display"
+                      Width="110" FontSize="13"
+                      Visibility="{Binding IsPolishEnabled, Converter={StaticResource BoolToVis}}"/>
           </StackPanel>
 
           <!-- Raw text card -->
@@ -112,7 +120,7 @@
           <Border Style="{StaticResource AppleCard}" Margin="0,0,0,8"
                   Visibility="{Binding IsPolishEnabled, Converter={StaticResource BoolToVis}}">
             <StackPanel>
-              <TextBlock Text="潤稿結果" Style="{StaticResource Caption}" Margin="0,0,0,6"/>
+              <TextBlock Text="{Binding PolishCardLabel}" Style="{StaticResource Caption}" Margin="0,0,0,6"/>
               <TextBox Text="{Binding PolishedText, Mode=TwoWay}"
                        Style="{StaticResource AppleTextBox}" TextWrapping="Wrap"
                        MinHeight="80" AcceptsReturn="True"/>

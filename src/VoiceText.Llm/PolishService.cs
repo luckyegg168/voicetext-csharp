@@ -18,12 +18,16 @@ public class PolishService
     {
         var s = _getSettings();
         var sys = PromptTemplates.GetPolishSystem(s.PolishPromptStyle);
-        return _llm.CompleteAsync(s.LlmModelName, sys, rawText, ct);
+        var user = BuildPolishInput(rawText);
+        return _llm.CompleteAsync(s.LlmModelName, sys, user, ct);
     }
 
     public IAsyncEnumerable<string> PolishStreamAsync(string rawText, CancellationToken ct = default)
     {
         var s = _getSettings();
-        return _llm.StreamAsync(s.LlmModelName, PromptTemplates.GetPolishSystem(s.PolishPromptStyle), rawText, ct);
+        return _llm.StreamAsync(s.LlmModelName, PromptTemplates.GetPolishSystem(s.PolishPromptStyle), BuildPolishInput(rawText), ct);
     }
+
+    private static string BuildPolishInput(string rawText) =>
+        $"請只輸出潤稿後文字。以下是待潤稿的語音轉錄內容：\n<transcript>\n{rawText}\n</transcript>";
 }

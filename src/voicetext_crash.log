@@ -1,0 +1,27 @@
+Microsoft.ML.OnnxRuntime.OnnxRuntimeException: [ErrorCode:RuntimeException] Non-zero status code returned while running If node. Name:'If_0' Status Message: Non-zero status code returned while running Shape node. Name:'If_0_then_branch__Inline_0__/decoder/Shape_1' Status Message: D:\a\_work\1\s\include\onnxruntime\core/framework/op_kernel_context.h:42 onnxruntime::OpKernelContext::Input Missing Input: state
+
+   at Microsoft.ML.OnnxRuntime.InferenceSession.RunImpl(RunOptions options, IntPtr[] inputNames, IntPtr[] inputValues, IntPtr[] outputNames)
+   at Microsoft.ML.OnnxRuntime.InferenceSession.Run(IReadOnlyCollection`1 inputs, IReadOnlyCollection`1 outputNames, RunOptions options)
+   at Microsoft.ML.OnnxRuntime.InferenceSession.Run(IReadOnlyCollection`1 inputs, IReadOnlyCollection`1 outputNames)
+   at Microsoft.ML.OnnxRuntime.InferenceSession.Run(IReadOnlyCollection`1 inputs)
+   at VoiceText.Audio.VadEngine.IsSpeech(Single[] samples, Int32 sampleRate) in D:\voicetext_csharp1\src\VoiceText.Audio\VadEngine.cs:line 61
+   at VoiceText.Audio.VadPipeline.ExtractSpeech(Single[] samples) in D:\voicetext_csharp1\src\VoiceText.Audio\VadPipeline.cs:line 65
+   at VoiceText.App.ViewModels.MainViewModel.StopRecording() in D:\voicetext_csharp1\src\VoiceText.App\ViewModels\MainViewModel.cs:line 156
+   at VoiceText.App.ViewModels.MainViewModel.ToggleRecording() in D:\voicetext_csharp1\src\VoiceText.App\ViewModels\MainViewModel.cs:line 79
+   at CommunityToolkit.Mvvm.Input.RelayCommand.Execute(Object parameter)
+   at System.Windows.Controls.Button.OnClick()
+   at System.Windows.Controls.Primitives.ButtonBase.OnMouseLeftButtonUp(MouseButtonEventArgs e)
+   at System.Windows.RoutedEventArgs.InvokeHandler(Delegate handler, Object target)
+   at System.Windows.EventRoute.InvokeHandlersImpl(Object source, RoutedEventArgs args, Boolean reRaised)
+   at System.Windows.UIElement.ReRaiseEventAs(DependencyObject sender, RoutedEventArgs args, RoutedEvent newEvent)
+   at System.Windows.RoutedEventArgs.InvokeHandler(Delegate handler, Object target)
+   at System.Windows.EventRoute.InvokeHandlersImpl(Object source, RoutedEventArgs args, Boolean reRaised)
+   at System.Windows.UIElement.RaiseEventImpl(DependencyObject sender, RoutedEventArgs args)
+   at System.Windows.UIElement.RaiseTrustedEvent(RoutedEventArgs args)
+   at System.Windows.Input.InputManager.ProcessStagingArea()
+   at System.Windows.Interop.HwndMouseInputProvider.ReportInput(IntPtr hwnd, InputMode mode, Int32 timestamp, RawMouseActions actions, Int32 x, Int32 y, Int32 wheel)
+   at System.Windows.Interop.HwndMouseInputProvider.FilterMessage(IntPtr hwnd, WindowMessage msg, IntPtr wParam, IntPtr lParam, Boolean& handled)
+   at System.Windows.Interop.HwndSource.InputFilterMessage(IntPtr hwnd, Int32 msg, IntPtr wParam, IntPtr lParam, Boolean& handled)
+   at MS.Win32.HwndWrapper.WndProc(IntPtr hwnd, Int32 msg, IntPtr wParam, IntPtr lParam, Boolean& handled)
+   at System.Windows.Threading.ExceptionWrapper.InternalRealCall(Delegate callback, Object args, Int32 numArgs)
+   at System.Windows.Threading.ExceptionWrapper.TryCatchWhen(Object source, Delegate callback, Object args, Int32 numArgs, Delegate catchHandler)
